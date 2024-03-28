@@ -40,7 +40,7 @@ TokenType classifyToken(char* lexeme) {
         return isKeyword(lexeme) ? KEYWORD : IDENTIFIER;
     } else if (isdigit(lexeme[0])) {
         // Check if lexeme is a double constant
-        if (strchr(lexeme, '.') != NULL) {
+        if (strchr(lexeme, '.') != NULL) {//strchr function in C is used to search for the first occurrence of a specified character in a given string
             return DOUBLE;
         } else {
             return INTEGER;
@@ -67,7 +67,7 @@ TokenType classifyToken(char* lexeme) {
 // Function to scan tokens from input
 void scanTokens(char* input) {
     char delimiters[] = " \t\n{}()<>=!+-*/%\"";
-    char* token = strtok(input, delimiters);
+    char* token = strtok(input, delimiters);//strtok function in C is used to tokenize (i.e., break down) a string into smaller strings
     while (token != NULL) {
         TokenType type = classifyToken(token);
         printf("Token: %s\tType: ", token);
