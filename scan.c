@@ -3,7 +3,8 @@
 #include <string.h>
 #include <ctype.h>
 
-#define MAX_TOKEN_LENGTH 100
+#define MAX_TOKEN_LENGTH 128
+#define SOURCE_CODE_LIMIT 512
 
 // Token types
 typedef enum { //define sets of named integer constants, providing more meaningful names for numeric values.
@@ -50,7 +51,7 @@ TokenType classifyToken(char* lexeme) {
         return STRING;
     } else {
         // Check for operators and boolean constants
-        char operators[18][3] = {"+", "-", "*", "/", "%", "||", "&&", ">", ">=", "<", "<=", "==", "!=", "!", "="};
+        char operators[18][3] = {"+", "-", "*", "/", "%%", "||", "&&", ">", ">=", "<", "<=", "==", "!=", "!", "="};
         for (int i = 0; i < 18; i++) {
             if (strcmp(lexeme, operators[i]) == 0) {
                 return OPERATOR;
@@ -101,10 +102,47 @@ void scanTokens(char* input) {
     }
 }
 
-int main() {
-    char input[] = "int x = 10; int y = 20; if (x < y) { x = x + 5; } else { y = y - 5; } while (x < y) { x = x + 1; }";
-    printf("Scanning input program:\n%s\n", input);
+int get_source_code(char *filename, char* source_text)
+{
+    FILE* source_file_ptr;      //file pointer to the source code file
+    char input_symbol;          //temporary storage for characters from the file
+    int index = 0;              //loop counter
+    int result = 0;
+     
+    if((source_file_ptr = fopen(filename, "r")) == NULL) 
+    {
+        printf("Could not open file, %s", filename);
+        return result;
+    }
+    result = 1;
+
+    while((input_symbol = fgetc(source_file_ptr)) != EOF)
+    {
+        source_text[index] = input_symbol;
+        index++;
+    }
+}
+
+int main(int argc, char **argv) {
+    char* source_file_name;
+    int CMD_args = 2;
+    int filename_index = 1;
+    char source_text[SOURCE_CODE_LIMIT];
+
+    int get_source_code(char *filename, char *source_text);
+
+    if(argc != CMD_args)
+    {
+        printf("Wrong number of arguements");
+        exit(EXIT_FAILURE);
+    }
+
+    source_file_name = argv[filename_index];
+    if(!get_source_code(source_file_name, source_text))
+        exit(EXIT_FAILURE);
+
+    printf("Scanning input program:\n%s\n", source_text);
     printf("==============================================\n");
-    scanTokens(input);
-    return 0;
+    scanTokens(source_text);
+    exit(EXIT_SUCCESS);
 }
