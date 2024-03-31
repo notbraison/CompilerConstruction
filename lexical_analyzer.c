@@ -24,7 +24,7 @@ typedef struct { //structure Token with two members: type and lexeme, allows for
 } Token;
 
 // Function to check if a string is a keyword
-int isKeyword(char* word) {
+int check_keyword(char* word) {
     char keywords[7][10] = {"if", "else", "while", "int", "double", "bool", "String"};
     for (int i = 0; i < 7; i++) {
         if (strcmp(word, keywords[i]) == 0) { //used for comparing two strings
@@ -35,9 +35,9 @@ int isKeyword(char* word) {
 }
 
 // Function to classify token type
-TokenType classifyToken(char* lexeme) {
+TokenType classify_tokens(char* lexeme) {
     if (isalpha(lexeme[0]) || lexeme[0] == '_') {
-        return isKeyword(lexeme) ? KEYWORD : IDENTIFIER;
+        return check_keyword(lexeme) ? KEYWORD : IDENTIFIER;
     } else if (isdigit(lexeme[0])) {
         // Check if lexeme is a double constant
         if (strchr(lexeme, '.') != NULL) {//strchr function in C is used to search for the first occurrence of a specified character in a given string
@@ -65,11 +65,11 @@ TokenType classifyToken(char* lexeme) {
 }
 
 // Function to scan tokens from input
-void scanTokens(char* input) {
+void scan_tokens(char* input) {
     char delimiters[] = " \t\n{}()<>=!+-*/%\"";
     char* token = strtok(input, delimiters);//strtok function in C is used to tokenize (i.e., break down) a string into smaller strings
     while (token != NULL) {
-        TokenType type = classifyToken(token);
+        TokenType type = classify_tokens(token);
         printf("Token: %s\tType: ", token);
         switch (type) {
             case IDENTIFIER:
@@ -105,6 +105,6 @@ int main() {
     char input[] = "int x = 10; int y = 20; if (x < y) { x = x + 5; } else { y = y - 5; } while (x < y) { x = x + 1; }";
     printf("Scanning input program:\n%s\n", input);
     printf("==============================================\n");
-    scanTokens(input);
+    scan_tokens(input);
     return 0;
 }
