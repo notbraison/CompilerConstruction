@@ -158,6 +158,8 @@ int get_source_code(char *filename, char *source_text)
         source_text[index] = input_symbol;
         index++;
     }
+
+    fclose(source_file_ptr);
 }
 
 int main(int argc, char **argv)
