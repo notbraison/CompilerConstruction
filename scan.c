@@ -4,25 +4,113 @@
 #include <ctype.h>
 #include <stdbool.h>
 
-// a header file containing the global definitions
+// header file for global declarations
 #include "global_declares.h"
 
-struct found_token tokenScanner(char *input)
+int main(int argc, char **argv)
 {
-    bool check_char_in_range(char character, char *range, int length);
-    enum characterclass intial_token_class(char character);
+    FILE *source_file_ptr; // file pointer to the source code file
+    char *source_file_name;
+    int CMD_args = 2;
+    int filename_index = 1;
+    char source_text[SOURCE_CODE_LIMIT];
+
+    int getSourceCode(char *filename, char *source_text, FILE *source_file_ptr);
+    struct found_token tokenScanner(char *input);
+    void tokenStream(char *input);
+
+    if (argc != CMD_args)
+    {
+        printf("Wrong number of arguements");
+        exit(EXIT_FAILURE);
+    }
+
+    source_file_name = argv[filename_index];
+
+    // obtain the source code from a file
+    if (!getSourceCode(source_file_name, source_text, source_file_ptr))
+        exit(EXIT_FAILURE);
+
+    printf("Scanning input program:\n%s\n", source_text);
+    printf("==============================================\n");
+    printf("Token\t  Type\n");
+
+    // run the scanner and get back the results
+    tokenStream(source_text);
+
+    fclose(source_file_ptr);
+    exit(EXIT_SUCCESS);
+}
+
+void tokenStream(char *input)
+{
+    struct found_token tokenScanner(char *input);
+    bool stop = false;
+    int index = 0;
+
+    do
+    {
+        struct found_token current_token = tokenScanner(input);
+
+        switch (current_token.token_type)
+        {
+        case IDENTIFIER:
+            printf("Identifier\n");
+            break;
+        case KEYWORD:
+            printf("Keyword\n");
+            break;
+        case INTEGER:
+            printf("Integer\n");
+            break;
+        case DOUBLE:
+            printf("Double\n");
+            break;
+        case STRING:
+            printf("String\n");
+            break;
+        case OPERATOR:
+            printf("Operator\n");
+            break;
+        case ERROR:
+            stop = true;
+            printf("\n");
+        default:
+            printf("Unkown\n");
+            break;
+        }
+
+        tokens_found[index] = current_token;
+        index++;
+    } while (!stop);
+}
+
+struct found_token tokenScanner(char *source_text)
+{
+    bool checkCharInRange(char character, char *range, int length);
+    enum characterclass initialTokenClass(char character);
+    int strlength(char *my_string);
 
     static int current_character = 0;
-    input += current_character;
+    char *input = source_text + current_character;
     int index = 0;
     enum characterclass initial_class;
     bool period_found = false;
+    int identifiers_length = strlength(identifier_legal_characters);
+    int delimiters_size = strlength(delimiters);
+    int integers_length = strlength(integer_characters);
+    int spaces_length = strlength(spaces);
 
-    for(int i = 0; i < 6; i++)
-        keyword_max_length[i] = strlen(keywords);
+    for (int i = 0; i < KEYWORD_MAX_LENGTH; i++)
+        keyword_unique_length[i] = strlength(keywords[0]);
 
     struct found_token next_token;
-    next_token.token_start = input;
+
+    while (checkCharInRange(*(input + index), spaces, spaces_length))
+    {
+        current_character++;
+        input++;
+    }
 
     if (*input == '\0')
     {
@@ -31,122 +119,140 @@ struct found_token tokenScanner(char *input)
         return next_token;
     }
 
-    initial_class = initial_token_class(*input);
+    initial_class = initialTokenClass(*input);
+    next_token.token_start[index] = *(input + index);
     index++;
 
     switch (initial_class)
     {
-        case CLASS_INTEGER:
-            while (!check_char_in_range(*(input + index), delimiters, delimiters_size))
+    case CLASS_INTEGER:
+        while (!checkCharInRange(*(input + index), delimiters, delimiters_size))
+        {
+            if (*(input + index) == period)
             {
-                if(*(input + index) == period)
-                {
-                    if(period_found)
-                    {
-                        next_token.token_type = ERROR;
-                        break;
-                    }
-                    next_token.token_type = DOUBLE;
-                } 
-                
-                if(check_char_in_range(*(input + index), integer_characters, integers_length))
-                {
-                    if(!period_found)
-                        next_token.token_type = INTEGER;
-                }
-                else
+                if (period_found)
                 {
                     next_token.token_type = ERROR;
                     break;
                 }
-
-                index++;
+                next_token.token_type = DOUBLE;
             }
-            
-            break;
-        case CLASS_ALPHABET:
-            while (!check_char_in_range(*(input + index), delimiters, delimiters_size))
+
+            if (checkCharInRange(*(input + index), integer_characters, integers_length))
             {
-                if(check_char_in_range(*(input + index), identifier_legal_characters, identifiers_length))
-                    next_token.token_type = IDENTIFIER;
-                else
-                    next_token.token_type = ERROR;
-
-                index++;
+                if (!period_found)
+                    next_token.token_type = INTEGER;
             }
-
-            break;
-        case CLASS_KEYWORD:
-            while(!check_char_in_range(*(input + index), delimiters, delimiters_size))
+            else
             {
-                if(check_char_in_range(*(input + index), keywords[index], keyword_max_length[index]))
-                    next_token.token_type = KEYWORD;
-                else if(check_char_in_range(*(input + index), identifier_legal_characters, identifiers_length))
-                    next_token.token_type = IDENTIFIER;
-                else
-                    next_token.token_type = ERROR;
-
-                index++;
+                next_token.token_type = ERROR;
+                break;
             }
 
-            break;
-        case CLASS_QUOTEMARK:
-            while(*(input + index) != '\n')
+            next_token.token_start[index] = *(input + index);
+            index++;
+        }
+
+        break;
+    case CLASS_ALPHABET:
+        while (!checkCharInRange(*(input + index), delimiters, delimiters_size))
+        {
+            if (checkCharInRange(*(input + index), identifier_legal_characters, identifiers_length))
+                next_token.token_type = IDENTIFIER;
+            else
+                next_token.token_type = ERROR;
+
+            next_token.token_start[index] = *(input + index);
+            index++;
+        }
+
+        break;
+    case CLASS_KEYWORD:
+        while (!checkCharInRange(*(input + index), delimiters, delimiters_size))
+        {
+            if (checkCharInRange(*(input + index), keywords[index], keyword_unique_length[index]))
+                next_token.token_type = KEYWORD;
+            else if (checkCharInRange(*(input + index), identifier_legal_characters, identifiers_length))
+                next_token.token_type = IDENTIFIER;
+            else
+                next_token.token_type = ERROR;
+
+            next_token.token_start[index] = *(input + index);
+            index++;
+        }
+
+        break;
+    case CLASS_QUOTEMARK:
+        while (*(input + index) != '\n')
+        {
+            if (*(input + index) == '\"')
+                break;
+
+            next_token.token_start[index] = *(input + index);
+            index++;
+        }
+
+        next_token.token_type = STRING;
+
+        break;
+    case CLASS_OPERATOR:
+        if (!checkCharInRange(*(input + index), delimiters, delimiters_size))
+            if (checkCharInRange(*(input + index), operators[index], operator_length[index]))
             {
-                if(*(input + index) == '\"')
-                    break;
-
+                next_token.token_start[index] = *(input + index);
                 index++;
             }
 
-            next_token.token_type = STRING;
-
-            break;
-        case CLASS_OPERATOR:
-            if(!check_char_in_range(*(input + index), delimiters, delimiters_size))
-                if(check_char_in_range(*(input + index), operators[index], operator_length[index]))
-                    index++;
-
-            next_token.token_type = OPERATOR;
-            break;
-        default:
-            next_token.token_type = ERROR;
-            break;
+        next_token.token_type = OPERATOR;
+        break;
+    default:
+        next_token.token_type = ERROR;
+        break;
     }
 
-    next_token.token_length = index;
     current_character += index;
+    next_token.token_start[index] = '\0';
+    
+    next_token.token_length = index;
+
+    return next_token;
 }
 
-enum characterclass intial_token_class(char character)
+enum characterclass initialTokenClass(char character)
 {
-    bool check_char_in_range(char character, char *range, int length);
+    bool checkCharInRange(char character, char *range, int length);
+    int strlength(char *my_string);
 
     int first_list = 0;
-    keyword_max_length[first_list] = strlen(keywords[first_list]);
-    operator_length[first_list] = strlen(operators[first_list]);
+    keyword_unique_length[first_list] = strlength(keywords[first_list]);
+    operator_length[first_list] = strlength(operators[first_list]);
+    int identifiers_length = strlength(identifier_legal_characters);
+    int integers_length = strlength(integer_characters);
+    int delimiters_size = strlength(delimiters);
 
-    if (check_char_in_range(character, integer_characters, integers_length))
+    if (checkCharInRange(character, integer_characters, integers_length))
         return CLASS_INTEGER;
 
-    if(check_char_in_range(character, keywords[0], keyword_max_length[0]))
+    if (checkCharInRange(character, keywords[0], keyword_unique_length[0]))
         return CLASS_KEYWORD;
 
-    if (check_char_in_range(character, identifier_legal_characters, identifiers_length))
+    if (checkCharInRange(character, identifier_legal_characters, identifiers_length))
         return CLASS_ALPHABET;
 
-    if(check_char_in_range(character, operators[first_list], operator_length[first_list]))
+    if (checkCharInRange(character, operators[first_list], operator_length[first_list]))
         return CLASS_OPERATOR;
 
-    if (character == "\"")
+    if (character == '\"')
         return CLASS_QUOTEMARK;
 
     return CLASS_ERROR;
 }
 
-bool check_char_in_range(char character, char *range, int length)
+bool checkCharInRange(char character, char *range, int length)
 {
-    // check if the current character is a delimiter
+    // check if the current character belongs to a range
+    // the given range can be the ranges we create
+
     for (int i = 0; i < length; i++)
         if (character == range[i])
             // if it is return true
@@ -156,7 +262,7 @@ bool check_char_in_range(char character, char *range, int length)
     return false;
 }
 
-int get_source_code(char *filename, char *source_text, FILE *source_file_ptr)
+int getSourceCode(char *filename, char *source_text, FILE *source_file_ptr)
 {
     char input_symbol; // temporary storage for characters from the file
     int index = 0;     // loop counter
@@ -174,38 +280,16 @@ int get_source_code(char *filename, char *source_text, FILE *source_file_ptr)
     while ((input_symbol = fgetc(source_file_ptr)) != EOF)
     {
         source_text[index] = input_symbol;
-        printf("%c", input_symbol);
+        // printf("%c", input_symbol);
         index++;
     }
 }
 
-int main(int argc, char **argv)
+int strlength(char *my_string)
 {
-    FILE *source_file_ptr; // file pointer to the source code file
-    char *source_file_name;
-    int CMD_args = 2;
-    int filename_index = 1;
-    char source_text[SOURCE_CODE_LIMIT];
+    int i = 0;
+    while (*(my_string + i) != '\0')
+        i++;
 
-    int get_source_code(char *filename, char *source_text, FILE *source_file_ptr);
-
-    if (argc != CMD_args)
-    {
-        printf("Wrong number of arguements");
-        exit(EXIT_FAILURE);
-    }
-
-    source_file_name = argv[filename_index];
-
-    // obtain the source code from a file
-    if (!get_source_code(source_file_name, source_text, source_file_ptr))
-        exit(EXIT_FAILURE);
-
-    printf("Scanning input program:\n%s\n", source_text);
-    printf("==============================================\n");
-
-    // run the scanner and get back the results
-    scan_tokens(source_text);
-    fclose(source_file_ptr);
-    exit(EXIT_SUCCESS);
+    return i;
 }
