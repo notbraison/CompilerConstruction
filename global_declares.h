@@ -3,8 +3,8 @@
 #define MAX_TOKEN_LENGTH 128
 #define SOURCE_CODE_LIMIT 512
 #define NUMBER_OF_KEYWORDS 8
-#define KEYWORD_MAX_LENGTH 10
-#define NUMBER_OF_OPERATORS 18
+#define KEYWORD_MAX_LENGTH 7
+#define UNIQUE_OPERATOR_NUMBER 13
 #define OPER_MAX_LENGTH 3
 #define FOUND_IDENTIFIERS_NO 64
 #define FOUND_INTEGERS_NO 64
@@ -48,8 +48,6 @@ found_doubles[FOUND_DOUBLES_NO],
 found_strings[FOUND_STRINGS_NO],
 found_booleans[FOUND_BOOLEANS_NO];
 
-
-
 //union to store the values of tokens
 //you can only use just 
 union associated_value
@@ -60,27 +58,32 @@ union associated_value
     bool constant_boolean;
 };
 
+// Int | Double | Bool | String | If | Else | While
 //token types descriptions
 char keywords[KEYWORD_MAX_LENGTH][NUMBER_OF_KEYWORDS] = {
-    "iewidbS",
-    "flhnoot",
-    " situor",
-    " el bli",
-    "  e l n",
-    "    e g"
+    "dswbei",
+    "othlnf",
+    "uriost",
+    "bile",
+    "lne",
+    "eg"
 };
-
 char *integer_characters = "0123456789";
 char *small_characters = "abcdefghijklmnopqrstuvwxyz";
 char *capital_characters = "ABCDEFGHIKLMNOPQRSTUVWXYZ";
 char period = '.';
 char underscore = '_';
 char *identifier_legal_characters = strcat("_", strcat(small_characters, capital_characters));
-char operators[NUMBER_OF_OPERATORS][OPER_MAX_LENGTH] = {
-    "+", "-", "*", "/", "%%", "||", "&&", ">", ">=", "<", "<=", "==", "!=", "!", "="
+
+//"+", "-", "*", "/", "%%", "||", "&&", ">", ">=", "<", "<=", "==", "!=", "!", "="
+char operators[OPER_MAX_LENGTH][UNIQUE_OPERATOR_NUMBER] = {
+    "+-*/%%|&><=!",
+    "|&="
 };
 char delimiters[] = " \t\n{}()=";
 
-int integers_length = sizeof(integer_characters) / sizeof(integer_characters[0]);
-int identifiers_length = sizeof(identifier_legal_characters) / sizeof(identifier_legal_characters[0]);
-int delimiters_size = sizeof(delimiters) / sizeof(delimiters[0]);
+int integers_length = strlen(integer_characters);
+int identifiers_length = strlen(identifier_legal_characters);
+int delimiters_size = strlen(delimiters);
+int keyword_max_length[KEYWORD_MAX_LENGTH];
+int operator_length[OPER_MAX_LENGTH];

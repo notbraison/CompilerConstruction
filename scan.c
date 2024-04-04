@@ -18,6 +18,9 @@ struct found_token tokenScanner(char *input)
     enum characterclass initial_class;
     bool period_found = false;
 
+    for(int i = 0; i < 6; i++)
+        keyword_max_length[i] = strlen(keywords);
+
     struct found_token next_token;
     next_token.token_start = input;
 
@@ -28,8 +31,7 @@ struct found_token tokenScanner(char *input)
         return next_token;
     }
 
-    if (index == 0)
-        initial_class = initial_token_class(*input);
+    initial_class = initial_token_class(*input);
     index++;
 
     switch (initial_class)
@@ -64,13 +66,48 @@ struct found_token tokenScanner(char *input)
             break;
         case CLASS_ALPHABET:
             while (!check_char_in_range(*(input + index), delimiters, delimiters_size))
-            {}
+            {
+                if(check_char_in_range(*(input + index), identifier_legal_characters, identifiers_length))
+                    next_token.token_type = IDENTIFIER;
+                else
+                    next_token.token_type = ERROR;
+
+                index++;
+            }
+
+            break;
+        case CLASS_KEYWORD:
+            while(!check_char_in_range(*(input + index), delimiters, delimiters_size))
+            {
+                if(check_char_in_range(*(input + index), keywords[index], keyword_max_length[index]))
+                    next_token.token_type = KEYWORD;
+                else if(check_char_in_range(*(input + index), identifier_legal_characters, identifiers_length))
+                    next_token.token_type = IDENTIFIER;
+                else
+                    next_token.token_type = ERROR;
+
+                index++;
+            }
+
             break;
         case CLASS_QUOTEMARK:
-            while(*(input + index) != '\"')
+            while(*(input + index) != '\n')
+            {
+                if(*(input + index) == '\"')
+                    break;
+
                 index++;
+            }
+
             next_token.token_type = STRING;
+
+            break;
         case CLASS_OPERATOR:
+            if(!check_char_in_range(*(input + index), delimiters, delimiters_size))
+                if(check_char_in_range(*(input + index), operators[index], operator_length[index]))
+                    index++;
+
+            next_token.token_type = OPERATOR;
             break;
         default:
             next_token.token_type = ERROR;
@@ -85,18 +122,21 @@ enum characterclass intial_token_class(char character)
 {
     bool check_char_in_range(char character, char *range, int length);
 
+    int first_list = 0;
+    keyword_max_length[first_list] = strlen(keywords[first_list]);
+    operator_length[first_list] = strlen(operators[first_list]);
+
     if (check_char_in_range(character, integer_characters, integers_length))
         return CLASS_INTEGER;
 
-    if(check_char_in_range(character, keywords[0], NUMBER_OF_KEYWORDS))
+    if(check_char_in_range(character, keywords[0], keyword_max_length[0]))
         return CLASS_KEYWORD;
 
     if (check_char_in_range(character, identifier_legal_characters, identifiers_length))
         return CLASS_ALPHABET;
 
-    for(int i = 0; i < NUMBER_OF_OPERATORS; i++)
-        if(character == operators[i])
-            return CLASS_OPERATOR;
+    if(check_char_in_range(character, operators[first_list], operator_length[first_list]))
+        return CLASS_OPERATOR;
 
     if (character == "\"")
         return CLASS_QUOTEMARK;
@@ -114,117 +154,6 @@ bool check_char_in_range(char character, char *range, int length)
 
     // if not return false
     return false;
-}
-
-// Function to check if a string is a keyword
-int check_keyword(char *word)
-{
-    char keywords[7][10] = {"if", "else", "while", "int", "double", "bool", "String"};
-    for (int i = 0; i < 7; i++)
-    {
-        if (strcmp(word, keywords[i]) == 0)
-        { // used for comparing two strings
-            return 1;
-        }
-    }
-    return 0;
-}
-
-// Function to classify token type
-TokenType classify_tokens(char *lexeme)
-{
-    int check_keyword(char *word);
-
-    char first_character = lexeme[0];
-
-    // check if first character is an alphabetical character or an underscore first
-    if (isalpha(first_character) || first_character == '_')
-    {
-        return check_keyword(lexeme) ? KEYWORD : IDENTIFIER;
-    }
-    // check if first character is a digit
-    else if (isdigit(first_character))
-    {
-        // Check if lexeme is a double constant
-        if (strchr(lexeme, '.') != NULL)
-        {
-            // strchr function in C is used to search for the first occurrence of a specified character in a given string
-            return DOUBLE;
-        }
-        else
-        {
-            return INTEGER;
-        }
-    }
-    // check if first character is quotation mark
-    else if (first_character == '"')
-    {
-        // Check if lexeme is a string
-        return STRING;
-    }
-    else
-    {
-        // Check for operators and boolean constants
-        char operators[18][3] = {"+", "-", "*", "/", "%%", "||", "&&", ">", ">=", "<", "<=", "==", "!=", "!", "="};
-        for (int i = 0; i < 18; i++)
-        {
-            if (strcmp(lexeme, operators[i]) == 0)
-            {
-                return OPERATOR;
-            }
-        }
-        // Check for boolean constants
-        if (strcmp(lexeme, "true") == 0 || strcmp(lexeme, "false") == 0)
-        {
-            return BOOLEAN;
-        }
-        return ERROR;
-    }
-}
-
-// Function to scan tokens from input
-void scan_tokens(char *input)
-{
-    TokenType classify_tokens(char *lexeme);
-
-    // these delimiters are used to signal the end of a token
-    char delimiters[] = " \t\n{};()";
-    // strtok function in C is used to tokenize (i.e., break down) a string into smaller strings
-    char *token = strtok(input, delimiters);
-
-    while (token != NULL)
-    {
-        TokenType type = classify_tokens(token);
-        printf("Token: %s\tType: ", token);
-        switch (type)
-        {
-        case IDENTIFIER:
-            printf("Identifier\n");
-            break;
-        case KEYWORD:
-            printf("Keyword\n");
-            break;
-        case INTEGER:
-            printf("Integer\n");
-            break;
-        case DOUBLE:
-            printf("Double\n");
-            break;
-        case STRING:
-            printf("String\n");
-            break;
-        case OPERATOR:
-            printf("Operator\n");
-            break;
-        case BOOLEAN:
-            printf("Boolean\n");
-            break;
-        default:
-            printf("Error\n");
-            break;
-        }
-        token = strtok(NULL, delimiters);
-    }
 }
 
 int get_source_code(char *filename, char *source_text, FILE *source_file_ptr)
