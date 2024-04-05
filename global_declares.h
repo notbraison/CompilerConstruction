@@ -11,16 +11,6 @@
 #define FOUND_BOOLEANS_NO 64
 #define TOKEN_LIMIT 512
 
-enum characterclass
-{
-    CLASS_ALPHABET,
-    CLASS_INTEGER,
-    CLASS_QUOTEMARK,
-    CLASS_OPERATOR,
-    CLASS_KEYWORD,
-    CLASS_ERROR
-};
-
 // Token types
 typedef enum
 { // define sets of named integer constants, providing more meaningful names for numeric values.
@@ -38,7 +28,7 @@ typedef enum
 // it stores where the token starts and the length of the token
 struct found_token
 {
-    char *token_start;
+    char *token_string;
     int token_length;
     TokenType token_type;
     // union associated_value value;
@@ -71,6 +61,7 @@ char *capital_characters = "ABCDEFGHIKLMNOPQRSTUVWXYZ";
 char period = '.';
 char underscore = '_';
 char *identifier_legal_characters = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIKLMNOPQRSTUVWXYZ0123456789";
+char *identifier_first_characters = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIKLMNOPQRSTUVWXYZ";
 
 //"+", "-", "*", "/", "%%", "||", "&&", ">", ">=", "<", "<=", "==", "!=", "!", "="
 char operators[OPER_MAX_LENGTH][UNIQUE_OPERATOR_NUMBER] = {
@@ -81,4 +72,11 @@ char *spaces = " \t\n\v;";
 
 int keyword_unique_length[KEYWORD_MAX_LENGTH];
 int operator_length[OPER_MAX_LENGTH];
-int current_character = 0;
+
+bool checkCharInRange(char character, char *range, int length);
+TokenType initialTokenClass(char character);
+int strlength(char *my_string);
+int getSourceCode(char *filename, char *source_text, FILE *source_file_ptr);
+struct found_token tokenScanner(char *input);
+void printToken(struct found_token token);
+int store_token_stream(char *input);
