@@ -1,9 +1,19 @@
+// to run the program in the terminal use the program's name followed by the name of the file containing the mini program
+//  ->  .\scanner test_file.txt
+
+// Wisdom Makokha P15/81777/2017
+// BRAISON ORINA  P15/142382/2021
+// ALEM CYRIL   P15/2135/2021
+// FIDEL OTIENO P15/1282/2010
+
+// Group 17 compiler construction
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 
 #define NUMBER_OF_KEYWORDS 10
-#define KEYWORD_MAX_LENGTH 7
+#define KEYWORD_MAX_LENGTH 6
 #define UNIQUE_OPERATOR_NUMBER 19
 #define OPER_MAX_LENGTH 3
 #define SOURCE_CODE_LIMIT 1024
@@ -30,7 +40,7 @@ struct token_struct
 };
 
 // Int | Double | Bool | String | If | Else | While | true | false
-char keywords[KEYWORD_MAX_LENGTH][NUMBER_OF_KEYWORDS] = {
+char keywords[KEYWORD_MAX_LENGTH][NUMBER_OF_KEYWORDS] = { //
     "dswbteif",
     "othlrnfa",
     "uriostl",
@@ -51,27 +61,26 @@ char operators[OPER_MAX_LENGTH][UNIQUE_OPERATOR_NUMBER] = {
 char *delimiters = " \t\n\v;+-*/%%|&><=!(){}";
 char *spaces = " \t\n\v;";
 
-int keyword_unique_length[KEYWORD_MAX_LENGTH];
-int operator_length[OPER_MAX_LENGTH];
-
+//prototype declarations
 const int strLength(char *string);
 char *tokenScanner(char *source_text, struct token_struct *next_token);
 bool checkCharInRange(char character, char *range);
 int getSourceCode(char *filename, char *destination_text, FILE *source_file_ptr);
 enum TokenType initialTokenClass(char character);
+void printTokens(struct token_struct *token_list, int token_end);
 
 int main(int argc, char **argv)
 {
-    FILE *source_file_ptr; // file pointer to the mini program file
-    char *source_filename; // filename
-    int CMD_args = 2;      // expected terminal arguements
-    int filename_index = 1;
-    char source_text[SOURCE_CODE_LIMIT];
-    int number_of_tokens;
-    char *next_ptr;
-    int token_index = 0;
+    FILE *source_file_ptr;               // file pointer to the mini program file
+    char *source_filename;               // filename
+    int CMD_args = 2;                    // expected terminal arguements
+    int filename_index = 1;              // index for filaname in the cmd arguemnts array
+    char source_text[SOURCE_CODE_LIMIT]; // string containing mini program stored here
+    char *next_ptr;                      // store current point in string to begin looking for tokens
+    int token_index = 0;                 // number of tokens found
+    char *output_format = "%-16s";       // output format for strings in the token stream output
 
-    struct token_struct token_list[TOKEN_LIMIT];
+    struct token_struct token_list[TOKEN_LIMIT]; // array of tokens
 
     // check for proper number of arguements
     if (argc != CMD_args)
@@ -82,65 +91,78 @@ int main(int argc, char **argv)
 
     // get filename from cmd line parameters
     source_filename = argv[filename_index];
+    // source_filename = "test_file.txt";
 
     // obtain the source code from a file
     if (!getSourceCode(source_filename, source_text, source_file_ptr))
         exit(EXIT_FAILURE);
 
     next_ptr = source_text;
+    // printf("Scanning input mini program....\n%s\n", source_text);
 
-    printf("Scanning input mini program:\n%s\n", source_text);
-    printf("==============================================\n");
-    printf("Token\t\tType\t\tLength\n");
-
-    // // run the scanner and get back the results to store in an array
+    // run the scanner and get back the results to store in an array token_list
     while (token_index < TOKEN_LIMIT)
     {
         next_ptr = tokenScanner(next_ptr, &token_list[token_index]);
-
         // printf("6\n");
-        if(next_ptr == NULL)
+
+        // stop if null returned
+        if (next_ptr == NULL)
             break;
 
-        printf(token_list[token_index].token_string);
-        printf(" \t\t");
-
-        switch (token_list[token_index].token_type)
-        {
-        case IDENTIFIER:
-            printf("Identifier  \t");
-            break;
-        case KEYWORD:
-            printf("Keyword  \t");
-            break;
-        case INTEGER:
-            printf("Integer  \t");
-            break;
-        case DOUBLE:
-            printf("Double  \t");
-            break;
-        case STRING:
-            printf("String  \t");
-            break;
-        case OPERATOR:
-            printf("Operator  \t");
-            break;
-        default:
-            printf("Unknown  \t");
-            break;
-        }
-
-        printf("%d\n", token_list[token_index].token_length);
+        // next compiler stage added here
 
         token_index++;
     }
 
+    printTokens(token_list, token_index);
     printf("Tokens found: %d\n", token_index);
-
     // printf("7\n");
 
     // fclose(source_file_ptr);
     exit(EXIT_SUCCESS);
+}
+
+//function to print the tokens in the token array token_list
+void printTokens(struct token_struct *token_list, int token_end)
+{
+    int token_index = 0;
+    char *output_format = "%-16s|"; // output format for strings in the token stream output
+
+    printf("==============================================\n");
+    printf("%-16s|%-16s|%-6s|\n", "Token", "Type", "Length");
+
+    for (; token_index < token_end; token_index++)
+    {
+        printf(output_format, token_list[token_index].token_string);
+
+        switch (token_list[token_index].token_type)
+        {
+        case IDENTIFIER:
+            printf(output_format, "Identifier");
+            break;
+        case KEYWORD:
+            printf(output_format, "Keyword");
+            break;
+        case INTEGER:
+            printf(output_format, "Integer");
+            break;
+        case DOUBLE:
+            printf(output_format, "Double");
+            break;
+        case STRING:
+            printf(output_format, "String");
+            break;
+        case OPERATOR:
+            printf(output_format, "Operator");
+            break;
+        default:
+            printf(output_format, "Unknown");
+            break;
+        }
+
+        printf("%6d|\n", token_list[token_index].token_length);
+    }
 }
 
 // function to get the text from the mini program and put it in a string
@@ -170,15 +192,21 @@ int getSourceCode(char *filename, char *destination_text, FILE *source_file_ptr)
 }
 
 // function to get tokens from an input string
+// tokenScanner function gets token stores in the current index in the tokens array token_list
+// next_ptr stores the point from which tokenScanner will begin scanning for tokens
+// tokenScanner returns the point in the string it stopped from to continue in the next iteration
 char *tokenScanner(char *source_text, struct token_struct *next_token)
 {
     int index = 0;
     bool period_found = false;
+    bool skip_rest = false;
+    int smallest_keyword_length = 2;
 
     // this section ensures that spaces are ignored: " \t\n\v;"
     while (checkCharInRange(*source_text, spaces))
         source_text++;
 
+    // stop when we encounter the null pointer in the string and
     if (*source_text == '\0')
     {
         printf("End of input string reached\n");
@@ -202,26 +230,17 @@ char *tokenScanner(char *source_text, struct token_struct *next_token)
             {
                 // period should only appear once
                 if (period_found)
-                {
                     next_token->token_type = ERROR;
-                    break;
+                else
+                {
+                    // found period then set to DOUBLE
+                    period_found = true;
+                    next_token->token_type = DOUBLE;
                 }
-                // found period
-                period_found = true;
-                next_token->token_type = DOUBLE;
             }
-            // look for more integers if no periods found
-            else if (checkCharInRange(*(source_text), integer_characters))
-            {
-                if (!period_found)
-                    next_token->token_type = INTEGER;
-            }
-            // any other character is an error
-            else
-            {
+            // if we get any non integer character return error
+            else if (!checkCharInRange(*(source_text + index), integer_characters))
                 next_token->token_type = ERROR;
-                break;
-            }
 
             // store current character in token
             next_token->token_string[index] = *(source_text + index);
@@ -245,12 +264,23 @@ char *tokenScanner(char *source_text, struct token_struct *next_token)
         break;
     case KEYWORD:
         // printf("---");
-        while (!checkCharInRange(*(source_text + index), delimiters))
+        while ((!checkCharInRange(*(source_text + index), delimiters)))
         {
-            if(checkCharInRange(*(source_text + index), keywords[index]));
-            // if the current character is not on the keywords[index] list then we are making an identifier
-            else if (checkCharInRange(*(source_text + index), identifier_legal_characters) && !checkCharInRange(*(source_text + index), keywords[index]))
-                next_token->token_type = IDENTIFIER;
+            //this sequence relies on the value being preset, if it is none of these checks will change the value again, they are there to ensure some scenarios are handled
+            //check if its a legal identifier character
+            if (checkCharInRange(*(source_text + index), identifier_legal_characters))
+            {
+                //check if the character is a valid keyword character, if so then just proceed
+                if (index < KEYWORD_MAX_LENGTH && checkCharInRange(*(source_text + index), keywords[index]));
+                //if already set as identifier no need to set the value again
+                else if(next_token->token_type == IDENTIFIER);
+                //if already an unrecognised character is found then just leave as error
+                else if(next_token->token_type == ERROR);
+                // otherwise set the character as an identifier
+                else
+                    next_token->token_type = IDENTIFIER;
+            }
+            //if unrecognised then just set as an error
             else
                 next_token->token_type = ERROR;
 
@@ -258,6 +288,11 @@ char *tokenScanner(char *source_text, struct token_struct *next_token)
             next_token->token_string[index] = *(source_text + index);
             index++;
         }
+
+        // valid keyword lengths are between 2 and 6 for now
+        // can be automated to pick from the list of keywords but it's okay as it is now
+        if (index < smallest_keyword_length)
+            next_token->token_type = IDENTIFIER;
 
         break;
     case STRING:
@@ -269,7 +304,7 @@ char *tokenScanner(char *source_text, struct token_struct *next_token)
             next_token->token_string[index] = *(source_text + index);
             index++;
         }
-        //store the closing quotation mark
+        // store the closing quotation mark
         next_token->token_string[index] = *(source_text + index);
         index++;
 
@@ -292,11 +327,11 @@ char *tokenScanner(char *source_text, struct token_struct *next_token)
         break;
     }
 
-    //add to source_text to change the pointer to reduce input set
+    // add to source_text to change the pointer to reduce input set
     source_text += index;
     next_token->token_string[index] = '\0';
 
-    //set token length
+    // set token length
     next_token->token_length = index;
 
     return source_text;
@@ -336,7 +371,6 @@ enum TokenType initialTokenClass(char character)
 // the given range can be the ranges we create
 bool checkCharInRange(char character, char *range)
 {
-
     const int length = strLength(range);
 
     for (int index = 0; index < length; index++)
