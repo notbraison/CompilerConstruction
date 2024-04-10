@@ -1,5 +1,5 @@
 int x=10;
-int y=20;
+int y=20;  
 string myStr = "dfskm";
 
 integer;

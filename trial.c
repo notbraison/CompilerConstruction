@@ -61,7 +61,7 @@ char operators[OPER_MAX_LENGTH][UNIQUE_OPERATOR_NUMBER] = {
 char *delimiters = " \t\n\v;+-*/%%|&><=!(){}";
 char *spaces = " \t\n\v;";
 
-//prototype declarations
+// prototype declarations
 const int strLength(char *string);
 char *tokenScanner(char *source_text, struct token_struct *next_token);
 bool checkCharInRange(char character, char *range);
@@ -71,14 +71,15 @@ void printTokens(struct token_struct *token_list, int token_end);
 
 int main(int argc, char **argv)
 {
-    FILE *source_file_ptr;               // file pointer to the mini program file
-    char *source_filename;               // filename
-    int CMD_args = 2;                    // expected terminal arguements
-    int filename_index = 1;              // index for filaname in the cmd arguemnts array
-    char source_text[SOURCE_CODE_LIMIT]; // string containing mini program stored here
-    char *next_ptr;                      // store current point in string to begin looking for tokens
-    int token_index = 0;                 // number of tokens found
-    char *output_format = "%-16s";       // output format for strings in the token stream output
+    FILE *source_file_ptr;         // file pointer to the mini program file
+    char *source_filename;         // filename
+    int CMD_args = 2;              // expected terminal arguements
+    int filename_index = 1;        // index for filaname in the cmd arguemnts array
+    int token_index = 0;           // number of tokens found
+    char *output_format = "%-16s"; // output format for strings in the token stream output
+    int lines = 0;            // stores the number of lines currently scanned through
+    char input_symbol;
+    
 
     struct token_struct token_list[TOKEN_LIMIT]; // array of tokens
 
@@ -93,37 +94,58 @@ int main(int argc, char **argv)
     source_filename = argv[filename_index];
     // source_filename = "test_file.txt";
 
-    // obtain the source code from a file
-    if (!getSourceCode(source_filename, source_text, source_file_ptr))
-        exit(EXIT_FAILURE);
 
-    next_ptr = source_text;
-    // printf("Scanning input mini program....\n%s\n", source_text);
-
-    // run the scanner and get back the results to store in an array token_list
-    while (token_index < TOKEN_LIMIT)
+    if ((source_file_ptr = fopen(source_filename, "r")) == NULL)
     {
-        next_ptr = tokenScanner(next_ptr, &token_list[token_index]);
-        // printf("6\n");
-
-        // stop if null returned
-        if (next_ptr == NULL)
-            break;
-
-        // next compiler stage added here
-
-        token_index++;
+        printf("Could not open file, %s", source_filename);
+        exit(EXIT_FAILURE);
     }
+
+    do
+    {
+        int index = 0;
+        char source_text[SOURCE_CODE_LIMIT]; // string containing mini program stored here
+        char *next_ptr;                      // store current point in string to begin looking for tokens
+        bool stop_token_scanner = false;     // stops token scanner loop
+
+        //gets a line from the source code or can stop at the end of the file
+        while ((input_symbol = fgetc(source_file_ptr)) != '\n' && (input_symbol != EOF))
+        {
+            source_text[index] = input_symbol;
+            index++;
+        }
+        source_text[index] = '\0';
+
+        //intermediate variable stores the starting point of current line
+        next_ptr = source_text;
+        lines++;
+
+        while (!stop_token_scanner)
+        {
+            //scan for tokens
+            next_ptr = tokenScanner(next_ptr, &token_list[token_index]);
+
+            //stop scanning once end of string reached
+            if (next_ptr == NULL)
+                stop_token_scanner = true;
+            else
+                token_index++;
+        }
+
+        //next stage of the compiler goes here
+
+    } while (input_symbol != EOF);
 
     printTokens(token_list, token_index);
     printf("Tokens found: %d\n", token_index);
+    printf("Lines found: %d\n", lines);
     // printf("7\n");
 
     fclose(source_file_ptr);
     exit(EXIT_SUCCESS);
 }
 
-//function to print the tokens in the token array token_list
+// function to print the tokens in the token array token_list
 void printTokens(struct token_struct *token_list, int token_end)
 {
     int token_index = 0;
@@ -209,7 +231,7 @@ char *tokenScanner(char *source_text, struct token_struct *next_token)
     // stop when we encounter the null pointer in the string and
     if (*source_text == '\0')
     {
-        printf("End of input string reached\n");
+        // printf("End of input string reached\n");
         return NULL;
     }
     // printf("2\n");
@@ -266,21 +288,24 @@ char *tokenScanner(char *source_text, struct token_struct *next_token)
         // printf("---");
         while ((!checkCharInRange(*(source_text + index), delimiters)))
         {
-            //this sequence relies on the value being preset, if it is none of these checks will change the value again, they are there to ensure some scenarios are handled
-            //check if its a legal identifier character
+            // this sequence relies on the value being preset, if it is none of these checks will change the value again, they are there to ensure some scenarios are handled
+            // check if its a legal identifier character
             if (checkCharInRange(*(source_text + index), identifier_legal_characters))
             {
-                //check if the character is a valid keyword character, if so then just proceed
-                if (index < KEYWORD_MAX_LENGTH && checkCharInRange(*(source_text + index), keywords[index]));
-                //if already set as identifier no need to set the value again
-                else if(next_token->token_type == IDENTIFIER);
-                //if already an unrecognised character is found then just leave as error
-                else if(next_token->token_type == ERROR);
+                // check if the character is a valid keyword character, if so then just proceed
+                if (index < KEYWORD_MAX_LENGTH && checkCharInRange(*(source_text + index), keywords[index]))
+                    ;
+                // if already set as identifier no need to set the value again
+                else if (next_token->token_type == IDENTIFIER)
+                    ;
+                // if already an unrecognised character is found then just leave as error
+                else if (next_token->token_type == ERROR)
+                    ;
                 // otherwise set the character as an identifier
                 else
                     next_token->token_type = IDENTIFIER;
             }
-            //if unrecognised then just set as an error
+            // if unrecognised then just set as an error
             else
                 next_token->token_type = ERROR;
 
