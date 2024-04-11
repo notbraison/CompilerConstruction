@@ -77,9 +77,9 @@ int main(int argc, char **argv)
     int filename_index = 1;        // index for filaname in the cmd arguemnts array
     int token_index = 0;           // number of tokens found
     char *output_format = "%-16s"; // output format for strings in the token stream output
-    int lines = 0;            // stores the number of lines currently scanned through
+    int lines = 0;                 // stores the number of lines currently scanned through
     char input_symbol;
-    
+    int check_file_empty = 0;
 
     struct token_struct token_list[TOKEN_LIMIT]; // array of tokens
 
@@ -94,52 +94,66 @@ int main(int argc, char **argv)
     source_filename = argv[filename_index];
     // source_filename = "test_file.txt";
 
-
     if ((source_file_ptr = fopen(source_filename, "r")) == NULL)
     {
         printf("Could not open file, %s", source_filename);
         exit(EXIT_FAILURE);
     }
 
-    do
+    int size = ftell(source_file_ptr);
+    // checks if the file is empty
+    if (size == check_file_empty)
+        printf("File is empty!\n");
+    else
     {
-        int index = 0;
-        char source_text[SOURCE_CODE_LIMIT]; // string containing mini program stored here
-        char *next_ptr;                      // store current point in string to begin looking for tokens
-        bool stop_token_scanner = false;     // stops token scanner loop
-
-        //gets a line from the source code or can stop at the end of the file
-        while ((input_symbol = fgetc(source_file_ptr)) != '\n' && (input_symbol != EOF))
+        do
         {
-            source_text[index] = input_symbol;
-            index++;
-        }
-        source_text[index] = '\0';
+            int index = 0;
+            char source_text[SOURCE_CODE_LIMIT]; // string containing mini program stored here
+            char *next_ptr;                      // store current point in string to begin looking for tokens
+            bool stop_token_scanner = false;     // stops token scanner loop
 
-        //intermediate variable stores the starting point of current line
-        next_ptr = source_text;
-        lines++;
+            // gets a line from the source code or can stop at the end of the file
+            while ((input_symbol = fgetc(source_file_ptr)) != '\n' && (input_symbol != EOF))
+            {
+                source_text[index] = input_symbol;
+                index++;
+            }
+            source_text[index] = '\0';
 
-        while (!stop_token_scanner)
-        {
-            //scan for tokens
-            next_ptr = tokenScanner(next_ptr, &token_list[token_index]);
+            // intermediate variable stores the starting point of current line
+            next_ptr = source_text;
+            lines++;
 
-            //stop scanning once end of string reached
-            if (next_ptr == NULL)
-                stop_token_scanner = true;
-            else
-                token_index++;
-        }
+            while (!stop_token_scanner)
+            {
+                // scan for tokens
+                next_ptr = tokenScanner(next_ptr, &token_list[token_index]);
 
-        //next stage of the compiler goes here
+                // stop scanning once end of string reached
+                if (next_ptr == NULL)
+                    stop_token_scanner = true;
+                else
+                    token_index++;
+            }
 
-    } while (input_symbol != EOF);
+            /**
+            *
+            * 
+            * 
+            *next stage of the compiler goes here
+            *
+            * 
+            */ 
 
-    printTokens(token_list, token_index);
-    printf("Tokens found: %d\n", token_index);
-    printf("Lines found: %d\n", lines);
-    // printf("7\n");
+
+        } while (input_symbol != EOF);
+
+        printTokens(token_list, token_index);
+        printf("Tokens found: %d\n", token_index);
+        printf("Lines found: %d\n", lines);
+        // printf("7\n");
+    }
 
     fclose(source_file_ptr);
     exit(EXIT_SUCCESS);
