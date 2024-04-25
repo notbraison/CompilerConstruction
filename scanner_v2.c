@@ -102,7 +102,7 @@ int main(int argc, char **argv)
 
     int size = ftell(source_file_ptr);
     // checks if the file is empty
-    if (size == check_file_empty)
+    if (size != check_file_empty)
         printf("File is empty!\n");
     else
     {
