@@ -90,7 +90,7 @@ int main(int argc, char **argv)
     }
 
     // get filename from cmd line parameters
-    source_filename = argv[filename_index];
+    source_filename = "test_file.txt";
     // source_filename = "test_file.txt";
 
     // obtain the source code from a file
@@ -129,8 +129,8 @@ void printTokens(struct token_struct *token_list, int token_end)
     int token_index = 0;
     char *output_format = "%-16s|"; // output format for strings in the token stream output
 
-    printf("==============================================\n");
     printf("%-16s|%-16s|%-6s|\n", "Token", "Type", "Length");
+    printf("==============================================\n");
 
     for (; token_index < token_end; token_index++)
     {
@@ -298,12 +298,16 @@ char *tokenScanner(char *source_text, struct token_struct *next_token)
     case STRING:
         // printf("----");
         // accept all characters until a quotation mark appears
-        while (*(source_text + index) != '\"')
+        while (*(source_text + index) != '\"' && index < TOKEN_STRING_LIMIT)
         {
             // store current character in token
             next_token->token_string[index] = *(source_text + index);
             index++;
         }
+
+        if(index == TOKEN_STRING_LIMIT)
+            next_token->token_type = ERROR;
+        
         // store the closing quotation mark
         next_token->token_string[index] = *(source_text + index);
         index++;

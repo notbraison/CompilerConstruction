@@ -1,1 +1,1 @@
-int min(){int 9_a = 56.8, bbb=3o, _ty6="12 88";}
+double if=999843; if a9 && 9x != 20 then z=45.9; mystring="  here ';

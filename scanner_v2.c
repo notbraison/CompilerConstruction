@@ -65,7 +65,6 @@ char *spaces = " \t\n\v;";
 const int strLength(char *string);
 char *tokenScanner(char *source_text, struct token_struct *next_token);
 bool checkCharInRange(char character, char *range);
-int getSourceCode(char *filename, char *destination_text, FILE *source_file_ptr);
 enum TokenType initialTokenClass(char character);
 void printTokens(struct token_struct *token_list, int token_end);
 
@@ -79,7 +78,6 @@ int main(int argc, char **argv)
     char *output_format = "%-16s"; // output format for strings in the token stream output
     int lines = 0;                 // stores the number of lines currently scanned through
     char input_symbol;
-    int check_file_empty = 0;
 
     struct token_struct token_list[TOKEN_LIMIT]; // array of tokens
 
@@ -100,60 +98,53 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    int size = ftell(source_file_ptr);
     // checks if the file is empty
-    if (size != check_file_empty)
-        printf("File is empty!\n");
-    else
+    do
     {
-        do
+        int index = 0;
+        char source_text[SOURCE_CODE_LIMIT]; // string containing mini program stored here
+        char *next_ptr;                      // store current point in string to begin looking for tokens
+        bool stop_token_scanner = false;     // stops token scanner loop
+
+        // gets a line from the source code or can stop at the end of the file
+        while ((input_symbol = fgetc(source_file_ptr)) != '\n' && (input_symbol != EOF))
         {
-            int index = 0;
-            char source_text[SOURCE_CODE_LIMIT]; // string containing mini program stored here
-            char *next_ptr;                      // store current point in string to begin looking for tokens
-            bool stop_token_scanner = false;     // stops token scanner loop
+            source_text[index] = input_symbol;
+            index++;
+        }
+        source_text[index] = '\0';
 
-            // gets a line from the source code or can stop at the end of the file
-            while ((input_symbol = fgetc(source_file_ptr)) != '\n' && (input_symbol != EOF))
-            {
-                source_text[index] = input_symbol;
-                index++;
-            }
-            source_text[index] = '\0';
+        // intermediate variable stores the starting point of current line
+        next_ptr = source_text;
+        lines++;
 
-            // intermediate variable stores the starting point of current line
-            next_ptr = source_text;
-            lines++;
+        while (!stop_token_scanner)
+        {
+            // scan for tokens
+            next_ptr = tokenScanner(next_ptr, &token_list[token_index]);
 
-            while (!stop_token_scanner)
-            {
-                // scan for tokens
-                next_ptr = tokenScanner(next_ptr, &token_list[token_index]);
+            // stop scanning once end of string reached
+            if (next_ptr == NULL)
+                stop_token_scanner = true;
+            else
+                token_index++;
+        }
 
-                // stop scanning once end of string reached
-                if (next_ptr == NULL)
-                    stop_token_scanner = true;
-                else
-                    token_index++;
-            }
+        /**
+         *
+         *
+         *
+         *next stage of the compiler goes here
+         *
+         *
+         */
 
-            /**
-            *
-            * 
-            * 
-            *next stage of the compiler goes here
-            *
-            * 
-            */ 
+    } while (input_symbol != EOF);
 
-
-        } while (input_symbol != EOF);
-
-        printTokens(token_list, token_index);
-        printf("Tokens found: %d\n", token_index);
-        printf("Lines found: %d\n", lines);
-        // printf("7\n");
-    }
+    printTokens(token_list, token_index);
+    printf("Tokens found: %d\n", token_index);
+    printf("Lines found: %d\n", lines);
+    // printf("7\n");
 
     fclose(source_file_ptr);
     exit(EXIT_SUCCESS);
@@ -165,8 +156,8 @@ void printTokens(struct token_struct *token_list, int token_end)
     int token_index = 0;
     char *output_format = "%-16s|"; // output format for strings in the token stream output
 
-    printf("==============================================\n");
     printf("%-16s|%-16s|%-6s|\n", "Token", "Type", "Length");
+    printf("==============================================\n");
 
     for (; token_index < token_end; token_index++)
     {
@@ -198,32 +189,6 @@ void printTokens(struct token_struct *token_list, int token_end)
         }
 
         printf("%6d|\n", token_list[token_index].token_length);
-    }
-}
-
-// function to get the text from the mini program and put it in a string
-int getSourceCode(char *filename, char *destination_text, FILE *source_file_ptr)
-{
-    char input_symbol; // temporarily store characters from the file
-    int index = 0;     // loop counter
-    int result = 0;    // store result of file operation
-
-    // check if the file could be opened
-    if ((source_file_ptr = fopen(filename, "r")) == NULL)
-    {
-        printf("Could not open file, %s", filename);
-        result = -1;
-        return result;
-    }
-    result = 1;
-    // printf("1\n");
-
-    // getting text from the file and putting in given string
-    while (((input_symbol = fgetc(source_file_ptr)) != EOF) && index < SOURCE_CODE_LIMIT)
-    {
-        destination_text[index] = input_symbol;
-        // printf("%c", input_symbol);
-        index++;
     }
 }
 
@@ -337,12 +302,16 @@ char *tokenScanner(char *source_text, struct token_struct *next_token)
     case STRING:
         // printf("----");
         // accept all characters until a quotation mark appears
-        while (*(source_text + index) != '\"')
+        while (*(source_text + index) != '\"' && index < TOKEN_STRING_LIMIT)
         {
             // store current character in token
             next_token->token_string[index] = *(source_text + index);
             index++;
         }
+
+        if(index == TOKEN_STRING_LIMIT)
+            next_token->token_type = ERROR;
+        
         // store the closing quotation mark
         next_token->token_string[index] = *(source_text + index);
         index++;
