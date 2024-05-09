@@ -1,0 +1,54 @@
+<program> ::= <statement-list>
+
+<statement-list> ::= <statement>; 
+        | <statement-list> <statement>;
+
+<statement> ::= <if-statement> 
+        | <while-loop> 
+        | <assignment-expression> 
+        | <declaration-statement>
+
+<if-statement> ::= if ( <logical-expression> ) { <statement-list> } 
+		| if( <logical-expression> ) { <statement-list> } else {<statement-list>}
+
+<while-loop> ::= while ( <logical-expression> ) { <statement-list> }
+
+<declaration-statement> ::= <type-specifier> <identifier-list>
+
+<identifier-list> ::= <identifier> 
+        | <identifier-list>
+<identifier> ::= identifier
+
+<type-specifier> ::= int | double | bool | string
+
+<expression> ::= <logical-expression> | <arithmetic-expression>
+
+<assignment-expression> ::= identifier = <expression>
+
+<arithmetic-expression> ::= <multiplication-expression> 
+        | <arithmetic-expression> + <multiplication-expression>
+        | <arithmetic expression> - <multiplication-expression>
+
+<multiplication-expression> ::= <factor> 
+		| <multiplication-expression> * <factor>
+		| <multiplication-expression> / <factor>
+		| <multiplication-expression> % <factor>
+
+<factor> ::= identifier 
+        | <number> 
+        | <boolean> 
+        | <expression>
+
+<number> ::= integer | double
+
+<logical-expression> ::= <logical-and-expression> 
+		| <logical-or-expression> || <logical-and-expression>
+
+<logical-and-expression> ::= <equality-expression>
+		| <logical-and-expression> && <equality-expression>
+        
+<equality-expression> ::= <arithmetic-expression>
+		| <relation-expression> < <arithmetic-expression>
+		| <relation-expression> > <arithmetic-expression>
+		| <relation-expression> <= <arithmetic-expression>
+		| <relation-expression> >= <arithmetic-expression>

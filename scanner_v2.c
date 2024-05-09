@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 
 #define NUMBER_OF_KEYWORDS 10
 #define KEYWORD_MAX_LENGTH 6
@@ -56,10 +57,10 @@ char *identifier_first_characters = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIKLMNOPQ
 
 //"+", "-", "*", "/", "%%", "||", "&&", ">", ">=", "<", "<=", "==", "!=", "!", "="
 char operators[OPER_MAX_LENGTH][UNIQUE_OPERATOR_NUMBER] = {
-    "+-*/%%|&><=!(){}\"",
+    "+-*/%%|&><=!;(){}\"",
     "|&="};
 char *delimiters = " \t\n\v;+-*/%%|&><=!(){}";
-char *spaces = " \t\n\v;";
+char *spaces = " \t\n\v";
 
 // prototype declarations
 const int strLength(char *string);
@@ -107,16 +108,21 @@ int main(int argc, char **argv)
         bool stop_token_scanner = false;     // stops token scanner loop
 
         // gets a line from the source code or can stop at the end of the file
-        while ((input_symbol = fgetc(source_file_ptr)) != '\n' && (input_symbol != EOF))
+        while ((input_symbol = fgetc(source_file_ptr)) != EOF)
         {
             source_text[index] = input_symbol;
             index++;
+
+            if(input_symbol == '\n')
+                lines++;
+
+            if(input_symbol == ';')
+                break;
         }
         source_text[index] = '\0';
 
         // intermediate variable stores the starting point of current line
         next_ptr = source_text;
-        lines++;
 
         while (!stop_token_scanner)
         {
@@ -200,7 +206,6 @@ char *tokenScanner(char *source_text, struct token_struct *next_token)
 {
     int index = 0;
     bool period_found = false;
-    bool skip_rest = false;
     int smallest_keyword_length = 2;
 
     // this section ensures that spaces are ignored: " \t\n\v;"
@@ -309,9 +314,9 @@ char *tokenScanner(char *source_text, struct token_struct *next_token)
             index++;
         }
 
-        if(index == TOKEN_STRING_LIMIT)
+        if (index == TOKEN_STRING_LIMIT)
             next_token->token_type = ERROR;
-        
+
         // store the closing quotation mark
         next_token->token_string[index] = *(source_text + index);
         index++;
@@ -402,4 +407,32 @@ const int strLength(char *string)
     // printf("5\n");
 
     return index;
+}
+
+bool program(struct token_struct *currentToken, const int maxTokens, int *currentIndex)
+{
+    if(statement_list(currentToken))
+        return true;
+    
+    return false;
+}
+
+bool statement_list(struct token_struct *currentToken)
+{
+    if(strcmp(currentToken->token_string, "{"))
+    {
+        currentToken++;
+        statement_list(currentToken);
+
+        currentToken++;
+        statement(currentToken);
+
+        if(strcmp(currentToken->token_string, "}"))
+            return true;
+    }
+    else
+        statement(currentToken);
+
+
+    if
 }
